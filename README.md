@@ -151,6 +151,7 @@ Never commit credentials to this repository. Both compose files read every crede
 | `MT5_PASSWORD` | No | MetaTrader 5 account password |
 | `MT5_SERVER` | No | Broker server, e.g. `FTMO-Demo` |
 | `MT5_CMD_OPTIONS` | No | Extra `terminal64.exe` command line options |
+| `MT5_DPI` | No | Wine/Windows display scaling for the MT5 UI (default `144` = 150%; `96` = 100%, `120` = 125%, `168` = 175%) |
 
 ### Dokploy
 
@@ -181,7 +182,18 @@ Copy `.env.example` to `.env` and fill in the values. `.env` is git-ignored.
 
 When `MT5_LOGIN` is set, the container writes `/config/.wine/drive_c/mt5-auto.ini` and starts `terminal64.exe` with `/config:C:\mt5-auto.ini`, so the terminal logs in automatically with `MT5_PASSWORD` / `MT5_SERVER`. The password is kept in that file inside the persistent `/config` volume (`KeepPrivate=1`). If you pass your own `/config:` option through `MT5_CMD_OPTIONS`, the auto-login file is not used.
 
+### Making the MT5 UI larger
 
+MT5 is a Windows application, so its font size follows the Windows display scaling reported by Wine. The prefix defaults to 96 DPI (100%), which looks tiny on large or high-resolution browser windows. `start.sh` writes `HKCU\Control Panel\Desktop\LogPixels` before launching MT5, using `MT5_DPI`:
+
+| `MT5_DPI` | Windows scaling |
+| --- | --- |
+| `96` | 100% |
+| `120` | 125% |
+| `144` | 150% (default) |
+| `168` | 175% |
+
+Change `MT5_DPI` in the Dokploy **Environment** tab and redeploy or restart the service. The value is applied to the persistent Wine prefix on startup, so no image rebuild is needed. This scales the whole MT5 interface (menus, panels, dialogs and chart text), not just one window.
 
 ## Where to place MQ5 and EX5 files
 

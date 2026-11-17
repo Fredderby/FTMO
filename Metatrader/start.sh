@@ -37,6 +37,20 @@ is_wine_python_package_installed() {
     return $?
 }
 
+# Check an installed package version without resolving its dependencies.
+# The Linux mt5linux package is installed with --no-deps, so
+# pkg_resources.require() would report a false negative on every start.
+is_python_package_version_installed() {
+    python3 -c "import importlib.metadata as m, sys; sys.exit(m.version('$1') != '$2')" 2>/dev/null
+    return $?
+}
+
+# Same version-only check for the Python inside the Wine prefix.
+is_wine_python_package_version_installed() {
+    $wine_executable python -c "import importlib.metadata as m, sys; sys.exit(m.version('$1') != '$2')" 2>/dev/null
+    return $?
+}
+
 # Check for necessary dependencies
 check_dependency "curl"
 check_dependency "$wine_executable"
@@ -45,6 +59,24 @@ check_dependency "$wine_executable"
 # an attached debugger ("A debugger has been found running in your system").
 disable_wine_debugger() {
     $wine_executable reg delete "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug" /v Debugger /f >/dev/null 2>&1 || true
+}
+
+# Wine reports 96 DPI (100% scaling) by default, so MT5 keeps its normal 8-9 pt
+# Windows UI. The browser only streams those pixels and does not apply display
+# scaling, which makes the terminal tiny on large or high-resolution screens.
+# Write the Windows scaling value into the prefix before MT5 starts.
+# 96 = 100%, 120 = 125%, 144 = 150%, 168 = 175%. Override with MT5_DPI.
+configure_dpi_scaling() {
+    local dpi="${MT5_DPI:-144}"
+
+    if ! [[ "$dpi" =~ ^[0-9]+$ ]] || [ "$dpi" -lt 96 ] || [ "$dpi" -gt 480 ]; then
+        show_message "Invalid MT5_DPI '$dpi', using 144."
+        dpi=144
+    fi
+
+    show_message "Setting Wine display scaling to ${dpi} DPI ($((dpi * 100 / 96))%)."
+    $wine_executable reg add "HKCU\\Control Panel\\Desktop" /v LogPixels /t REG_DWORD /d "$dpi" /f >/dev/null
+    $wine_executable reg query "HKCU\\Control Panel\\Desktop" /v LogPixels
 }
 
 # Make sure the Wine prefix exists before writing into it. On a fresh /config
@@ -56,6 +88,7 @@ if [ ! -d "/config/.wine/drive_c" ]; then
     mkdir -p "/config/.wine/drive_c"
 fi
 disable_wine_debugger
+configure_dpi_scaling
 
 # Install Mono if not present
 if [ ! -e "/config/.wine/drive_c/windows/mono" ]; then
@@ -137,8 +170,11 @@ if ! is_wine_python_package_installed "MetaTrader5==$metatrader_version"; then
 fi
 # Install mt5linux library in Windows if not installed
 show_message "[6/7] Checking and installing mt5linux library in Windows if necessary"
-if ! is_wine_python_package_installed "mt5linux"; then
-    $wine_executable python -m pip install --no-cache-dir "mt5linux>=0.1.9"
+if ! is_wine_python_package_version_installed "mt5linux" "0.1.9"; then
+    # 0.1.9 is the last release that provides the server launcher used below.
+    # 1.x needs Python 3.12+ and replaced the CLI, so an unpinned install breaks
+    # on both the image's Python 3.11 and Wine's Python 3.9.
+    $wine_executable python -m pip install --no-cache-dir "mt5linux==0.1.9"
 fi
 
 # Install python-dateutil if needed (datetime is built-in, but dateutil adds features)
@@ -149,8 +185,11 @@ fi
 
 # Install mt5linux library in Linux if not installed
 show_message "[6/7] Checking and installing mt5linux library in Linux if necessary"
-if ! is_python_package_installed "mt5linux"; then
-    pip install --break-system-packages --no-cache-dir --no-deps mt5linux && \
+if ! is_python_package_version_installed "mt5linux" "0.1.9"; then
+    # Pin 0.1.9: 1.x uses Python 3.12-only syntax and no longer supports the
+    # `--host ... -p ... -w wine python.exe` launcher used below. Debian
+    # bookworm ships Python 3.11, so an unpinned install crashes on startup.
+    pip install --break-system-packages --no-cache-dir --no-deps "mt5linux==0.1.9" && \
     pip install --break-system-packages --no-cache-dir rpyc plumbum numpy
 fi
 

@@ -21,6 +21,8 @@ services:
       - MT5_PASSWORD=${MT5_PASSWORD:-}
       - MT5_SERVER=${MT5_SERVER:-}
       - MT5_CMD_OPTIONS=${MT5_CMD_OPTIONS:-}
+      # Wine/Windows display scaling for MT5: 96=100%, 120=125%, 144=150%, 168=175%.
+      - MT5_DPI=${MT5_DPI:-144}
 
 volumes:
   mt5-config:
