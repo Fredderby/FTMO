@@ -41,6 +41,12 @@ is_wine_python_package_installed() {
 check_dependency "curl"
 check_dependency "$wine_executable"
 
+# Wine registers its own debugger under AeDebug, which MetaTrader mistakes for
+# an attached debugger ("A debugger has been found running in your system").
+disable_wine_debugger() {
+    $wine_executable reg delete "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug" /v Debugger /f >/dev/null 2>&1 || true
+}
+
 # Make sure the Wine prefix exists before writing into it. On a fresh /config
 # volume drive_c does not exist yet, so downloads into it would fail.
 if [ ! -d "/config/.wine/drive_c" ]; then
@@ -49,6 +55,7 @@ if [ ! -d "/config/.wine/drive_c" ]; then
     $wine_executable wineserver -w >/dev/null 2>&1 || true
     mkdir -p "/config/.wine/drive_c"
 fi
+disable_wine_debugger
 
 # Install Mono if not present
 if [ ! -e "/config/.wine/drive_c/windows/mono" ]; then
@@ -69,6 +76,7 @@ else
 
     # Set Windows 10 mode in Wine and download and install MT5
     $wine_executable reg add "HKEY_CURRENT_USER\\Software\\Wine" /v Version /t REG_SZ /d "win10" /f
+    disable_wine_debugger
     show_message "[3/7] Downloading MT5 installer..."
     curl -o /config/.wine/drive_c/mt5setup.exe $mt5setup_url
     show_message "[3/7] Installing MetaTrader 5..."
@@ -80,6 +88,7 @@ fi
 # Recheck if MetaTrader 5 is installed
 if [ -e "$mt5file" ]; then
     show_message "[4/7] File $mt5file is installed. Running MT5..."
+    disable_wine_debugger
 
     # Optional auto-login from environment variables. Only applied when no
     # explicit /config: option was provided via MT5_CMD_OPTIONS.
