@@ -43,10 +43,10 @@ docker build -t mt5 .
 3. Run the Docker image:
 
 ```bash
-docker run -d -p 3000:3000 -p 8001:8001 -v config:/config mt5
+docker run -d -p 3100:3000 -p 8001:8001 -v config:/config mt5
 ```
 
-Now you can access MetaTrader5 via a web browser at localhost:3000.
+Now you can access MetaTrader5 via a web browser at localhost:3100.
 
 On first run it may take a few minutes to get everything installed and running. Normally it takes less than 5 minutes. You don't need to do anything. All installation process is automatic and you should end up with MetaTrader5 running in your web session.
 
@@ -77,7 +77,7 @@ services:
     volumes:
       - ./config:/config
     ports:
-      - 3000:3000
+      - 3100:3000
       - 8001:8001
     environment:
       - CUSTOM_USER=<Choose a user>
@@ -109,7 +109,7 @@ services:
     volumes:
       - mt5_config:/config
     ports:
-      - 3000:3000
+      - 3100:3000
       - 8001:8001
     environment:
       - CUSTOM_USER=<Choose a user>
@@ -131,7 +131,7 @@ In some systems `docker compose` command does not exists. Try to use `docker-com
 
 4. Connect to web interface
 
-Start your browser pointing `http://<your ip address>:3000`
+Start your browser pointing `http://<your ip address>:3100`
 
 On first run it may take a few minutes to get everything installed and running. Normally it takes less than 5 minutes. You don't need to do anything. All installation process is automatic and you should end up with MetaTrader5 running in your web session.
 
@@ -198,7 +198,7 @@ services:
     volumes:
       - mt5_config:/config
     ports:
-      - 3000:3000
+      - 3100:3000
       - 8001:8001
     environment:
       - CUSTOM_USER=<Choose a user>
@@ -212,7 +212,7 @@ volumes:
 Example using docker run:
 
 ```bash
-docker run -d -p 3000:3000 -p 8001:8001 \
+docker run -d -p 3100:3000 -p 8001:8001 \
   -e MT5_CMD_OPTIONS="/config:C:\\customized_for_tester_etc.ini" \
   -v mt5_config:/config \
   gmag11/metatrader5_vnc
