@@ -41,12 +41,21 @@ is_wine_python_package_installed() {
 check_dependency "curl"
 check_dependency "$wine_executable"
 
+# Make sure the Wine prefix exists before writing into it. On a fresh /config
+# volume drive_c does not exist yet, so downloads into it would fail.
+if [ ! -d "/config/.wine/drive_c" ]; then
+    show_message "Initializing Wine prefix..."
+    $wine_executable wineboot --init >/dev/null 2>&1 || true
+    $wine_executable wineserver -w >/dev/null 2>&1 || true
+    mkdir -p "/config/.wine/drive_c"
+fi
+
 # Install Mono if not present
 if [ ! -e "/config/.wine/drive_c/windows/mono" ]; then
     show_message "[1/7] Downloading and installing Mono..."
-    curl -o /config/.wine/drive_c/mono.msi $mono_url
+    curl -fL -o /config/.wine/drive_c/mono.msi $mono_url
     WINEDLLOVERRIDES=mscoree=d $wine_executable msiexec /i /config/.wine/drive_c/mono.msi /qn
-    rm /config/.wine/drive_c/mono.msi
+    rm -f /config/.wine/drive_c/mono.msi
     show_message "[1/7] Mono installed."
 else
     show_message "[1/7] Mono is already installed."
