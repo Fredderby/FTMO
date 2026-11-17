@@ -6,11 +6,12 @@ services:
     volumes:
       - ./config:/config
     ports:
-      - 3100:3000
+      - 3100:3100
       - 8001:8001
     environment:
       - UID=${UID:-1000}
       - GID=${GID:-1000}
+      - CUSTOM_PORT=${CUSTOM_PORT:-3100}
       - CUSTOM_USER=${CUSTOM_USER}
       - PASSWORD=${PASSWORD}
       - MT5_LOGIN=${MT5_LOGIN:-}

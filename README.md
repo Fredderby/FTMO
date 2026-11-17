@@ -43,7 +43,7 @@ docker build -t mt5 .
 3. Run the Docker image:
 
 ```bash
-docker run -d -p 3100:3000 -p 8001:8001 -v config:/config mt5
+docker run -d -p 3100:3100 -p 8001:8001 -e CUSTOM_PORT=3100 -v config:/config mt5
 ```
 
 Now you can access MetaTrader5 via a web browser at localhost:3100.
@@ -77,9 +77,10 @@ services:
     volumes:
       - ./config:/config
     ports:
-      - 3100:3000
+      - 3100:3100
       - 8001:8001
     environment:
+      - CUSTOM_PORT=3100
       - CUSTOM_USER=${CUSTOM_USER}
       - PASSWORD=${PASSWORD}
 ```
@@ -109,9 +110,10 @@ services:
     volumes:
       - mt5_config:/config
     ports:
-      - 3100:3000
+      - 3100:3100
       - 8001:8001
     environment:
+      - CUSTOM_PORT=3100
       - CUSTOM_USER=${CUSTOM_USER}
       - PASSWORD=${PASSWORD}
 
@@ -141,6 +143,7 @@ Never commit credentials to this repository. Both compose files read every crede
 
 | Variable | Required | Description |
 | --- | --- | --- |
+| `CUSTOM_PORT` | No | Internal HTTP port for the web UI (default `3100` in these compose files; the base image default is `3000`) |
 | `CUSTOM_USER` | Yes | Username for the KasmVNC web interface |
 | `PASSWORD` | Yes | Password for the KasmVNC web interface |
 | `UID` / `GID` | No | Container user IDs (default `1000`) |
@@ -154,6 +157,7 @@ Never commit credentials to this repository. Both compose files read every crede
 1. Open the Docker Compose service and go to the **Environment** tab.
 2. Add `CUSTOM_USER`, `PASSWORD`, and (optionally) `MT5_LOGIN`, `MT5_PASSWORD`, `MT5_SERVER`.
 3. Deploy. Dokploy writes these values to a `.env` file next to the compose file and the `${VAR}` references pick them up.
+4. When adding the domain, use container port **3100** (the value of `CUSTOM_PORT`).
 
 ### Local development
 
@@ -228,9 +232,10 @@ services:
     volumes:
       - mt5_config:/config
     ports:
-      - 3100:3000
+      - 3100:3100
       - 8001:8001
     environment:
+      - CUSTOM_PORT=3100
       - CUSTOM_USER=${CUSTOM_USER}
       - PASSWORD=${PASSWORD}
       - MT5_CMD_OPTIONS=/config:C:\\customized_for_tester_etc.ini
@@ -242,7 +247,8 @@ volumes:
 Example using docker run:
 
 ```bash
-docker run -d -p 3100:3000 -p 8001:8001 \
+docker run -d -p 3100:3100 -p 8001:8001 \
+  -e CUSTOM_PORT=3100 \
   -e MT5_CMD_OPTIONS="/config:C:\\customized_for_tester_etc.ini" \
   -v mt5_config:/config \
   gmag11/metatrader5_vnc
