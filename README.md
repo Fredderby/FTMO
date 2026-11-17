@@ -65,7 +65,7 @@ cd MT5
 nano docker-compose.yaml
 ```
 
-Use this content filling user and password with your own data.
+Use this content, then set the credentials as environment variables (see [Credentials and environment variables](#credentials-and-environment-variables)).
 
 ```yaml
 version: '3'
@@ -80,8 +80,8 @@ services:
       - 3100:3000
       - 8001:8001
     environment:
-      - CUSTOM_USER=<Choose a user>
-      - PASSWORD=<Choose a secure password>
+      - CUSTOM_USER=${CUSTOM_USER}
+      - PASSWORD=${PASSWORD}
 ```
 
 **Notice**: If you do not need to do remote python programming you can get a much smaller installation changing this line:
@@ -112,8 +112,8 @@ services:
       - 3100:3000
       - 8001:8001
     environment:
-      - CUSTOM_USER=<Choose a user>
-      - PASSWORD=<Choose a secure password>
+      - CUSTOM_USER=${CUSTOM_USER}
+      - PASSWORD=${PASSWORD}
 
 volumes:
   mt5_config:
@@ -134,6 +134,36 @@ In some systems `docker compose` command does not exists. Try to use `docker-com
 Start your browser pointing `http://<your ip address>:3100`
 
 On first run it may take a few minutes to get everything installed and running. Normally it takes less than 5 minutes. You don't need to do anything. All installation process is automatic and you should end up with MetaTrader5 running in your web session.
+
+## Credentials and environment variables
+
+Never commit credentials to this repository. Both compose files read every credential from environment variables, so nothing sensitive needs to live in Git.
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `CUSTOM_USER` | Yes | Username for the KasmVNC web interface |
+| `PASSWORD` | Yes | Password for the KasmVNC web interface |
+| `UID` / `GID` | No | Container user IDs (default `1000`) |
+| `MT5_LOGIN` | No | MetaTrader 5 account number |
+| `MT5_PASSWORD` | No | MetaTrader 5 account password |
+| `MT5_SERVER` | No | Broker server, e.g. `FTMO-Demo` |
+| `MT5_CMD_OPTIONS` | No | Extra `terminal64.exe` command line options |
+
+### Dokploy
+
+1. Open the Docker Compose service and go to the **Environment** tab.
+2. Add `CUSTOM_USER`, `PASSWORD`, and (optionally) `MT5_LOGIN`, `MT5_PASSWORD`, `MT5_SERVER`.
+3. Deploy. Dokploy writes these values to a `.env` file next to the compose file and the `${VAR}` references pick them up.
+
+### Local development
+
+Copy `.env.example` to `.env` and fill in the values. `.env` is git-ignored.
+
+### MT5 auto-login
+
+When `MT5_LOGIN` is set, the container writes `/config/.wine/drive_c/mt5-auto.ini` and starts `terminal64.exe` with `/config:C:\mt5-auto.ini`, so the terminal logs in automatically with `MT5_PASSWORD` / `MT5_SERVER`. The password is kept in that file inside the persistent `/config` volume (`KeepPrivate=1`). If you pass your own `/config:` option through `MT5_CMD_OPTIONS`, the auto-login file is not used.
+
+
 
 ## Where to place MQ5 and EX5 files
 
@@ -201,8 +231,8 @@ services:
       - 3100:3000
       - 8001:8001
     environment:
-      - CUSTOM_USER=<Choose a user>
-      - PASSWORD=<Choose a secure password>
+      - CUSTOM_USER=${CUSTOM_USER}
+      - PASSWORD=${PASSWORD}
       - MT5_CMD_OPTIONS=/config:C:\\customized_for_tester_etc.ini
 
 volumes:

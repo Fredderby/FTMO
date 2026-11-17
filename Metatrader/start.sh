@@ -71,6 +71,27 @@ fi
 # Recheck if MetaTrader 5 is installed
 if [ -e "$mt5file" ]; then
     show_message "[4/7] File $mt5file is installed. Running MT5..."
+
+    # Optional auto-login from environment variables. Only applied when no
+    # explicit /config: option was provided via MT5_CMD_OPTIONS.
+    if [ -n "${MT5_LOGIN:-}" ]; then
+        case " $MT5_CMD_OPTIONS " in
+            *" /config:"*) ;;
+            *)
+                mt5_ini="/config/.wine/drive_c/mt5-auto.ini"
+                {
+                    echo "[Common]"
+                    echo "Login=${MT5_LOGIN}"
+                    [ -n "${MT5_SERVER:-}" ] && echo "Server=${MT5_SERVER}"
+                    [ -n "${MT5_PASSWORD:-}" ] && echo "Password=${MT5_PASSWORD}"
+                    echo "KeepPrivate=1"
+                } > "$mt5_ini"
+                MT5_CMD_OPTIONS="$MT5_CMD_OPTIONS /config:C:\\mt5-auto.ini"
+                show_message "[4/7] MT5 auto-login enabled for account ${MT5_LOGIN} (${MT5_SERVER:-default server})."
+                ;;
+        esac
+    fi
+
     $wine_executable "$mt5file" $MT5_CMD_OPTIONS &
 else
     show_message "[4/7] File $mt5file is not installed. MT5 cannot be run."
