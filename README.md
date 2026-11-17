@@ -59,10 +59,10 @@ mkdir MT5
 cd MT5
 ```
 
-2. Create `docker-compose.yaml` file.
+2. Create `docker-compose.yml` file.
 
 ```bash
-nano docker-compose.yaml
+nano docker-compose.yml
 ```
 
 Use this content, then set the credentials as environment variables (see [Credentials and environment variables](#credentials-and-environment-variables)).
@@ -155,9 +155,10 @@ Never commit credentials to this repository. Both compose files read every crede
 ### Dokploy
 
 1. Open the Docker Compose service and go to the **Environment** tab.
-2. Add `CUSTOM_USER`, `PASSWORD`, and (optionally) `MT5_LOGIN`, `MT5_PASSWORD`, `MT5_SERVER`.
-3. Deploy. Dokploy writes these values to a `.env` file next to the compose file and the `${VAR}` references pick them up.
-4. When adding the domain, use container port **3100** (the value of `CUSTOM_PORT`).
+2. Set **Compose Path** to `./docker-compose.yml` (the repository file name).
+3. Add `CUSTOM_USER`, `PASSWORD`, and (optionally) `MT5_LOGIN`, `MT5_PASSWORD`, `MT5_SERVER`.
+4. Deploy. Dokploy writes these values to a `.env` file next to the compose file and the `${VAR}` references pick them up.
+5. When adding the domain, use container port **3100** (the value of `CUSTOM_PORT`).
 
 ### Local development
 
