@@ -160,6 +160,19 @@ Never commit credentials to this repository. Both compose files read every crede
 4. Deploy. Dokploy writes these values to a `.env` file next to the compose file and the `${VAR}` references pick them up.
 5. When adding the domain, use container port **3100** (the value of `CUSTOM_PORT`).
 
+Dokploy deletes the whole repository checkout (`/etc/dokploy/compose/<app>/code`) at the start of every deployment. Never bind-mount a path from that checkout into the container (for example `./config:/config`): the data is wiped on each deploy, and if the previous container is still running the cleanup fails with:
+
+```
+rm: cannot remove '.../code/config/.wine': Directory not empty
+```
+
+These compose files therefore mount the Docker-managed `mt5-config` volume at `/config`. If a deployment already failed with that error, remove the stale checkout once and deploy again:
+
+```bash
+docker rm -f ftmo-mt5-ckz48p-mt5-1 2>/dev/null || true   # old container, if it still exists
+rm -rf /etc/dokploy/compose/ftmo-mt5-ckz48p/code/config
+```
+
 ### Local development
 
 Copy `.env.example` to `.env` and fill in the values. `.env` is git-ignored.

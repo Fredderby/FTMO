@@ -3,7 +3,11 @@ services:
     build: .
     image: gmag11/metatrader5_vnc
     volumes:
-      - ./config:/config
+      # Use a Docker-managed volume, not ./config. Dokploy deletes the whole
+      # repository checkout (code/) at the start of every deployment, so a bind
+      # mount inside it both loses all Wine/MT5 data and fails with
+      # "Directory not empty" while the previous container is still writing to it.
+      - mt5-config:/config
     ports:
       - 3100:3100
       - 8001:8001
@@ -17,3 +21,6 @@ services:
       - MT5_PASSWORD=${MT5_PASSWORD:-}
       - MT5_SERVER=${MT5_SERVER:-}
       - MT5_CMD_OPTIONS=${MT5_CMD_OPTIONS:-}
+
+volumes:
+  mt5-config:
