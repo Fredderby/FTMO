@@ -202,13 +202,27 @@ fi
 # Start the MT5 server on Linux
 show_message "[7/7] Starting the mt5linux server..."
 python3 -m mt5linux --host 0.0.0.0 -p $mt5server_port -w $wine_executable python.exe &
+mt5_server_pid=$!
 
-# Give the server some time to start
-sleep 5
+# The RPyC server can bind well after 5 seconds, especially while Wine is
+# still warming up. Poll for the port and stop early if the process dies.
+mt5_server_timeout=30
+mt5_server_waited=0
+while [ "$mt5_server_waited" -lt "$mt5_server_timeout" ]; do
+    if ! kill -0 "$mt5_server_pid" 2>/dev/null; then
+        break
+    fi
+    if ss -tuln | grep -q ":$mt5server_port "; then
+        break
+    fi
+    sleep 1
+    mt5_server_waited=$((mt5_server_waited + 1))
+done
 
-# Check if the server is running
-if ss -tuln | grep ":$mt5server_port" > /dev/null; then
+if ss -tuln | grep -q ":$mt5server_port "; then
     show_message "[7/7] The mt5linux server is running on port $mt5server_port."
+elif ! kill -0 "$mt5_server_pid" 2>/dev/null; then
+    show_message "[7/7] The mt5linux server exited before opening port $mt5server_port. Check the log above for errors."
 else
-    show_message "[7/7] Failed to start the mt5linux server on port $mt5server_port."
+    show_message "[7/7] The mt5linux server did not open port $mt5server_port within ${mt5_server_timeout}s. Check the log above for errors."
 fi
